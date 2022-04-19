@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="19455" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19454"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CustomTabBarFooterView" customModule="PhotoKit_Demo" customModuleProvider="target">
+            <connections>
+                <outlet property="left" destination="nLw-i5-ErV" id="6oY-aU-aQ7"/>
+                <outlet property="mid" destination="5iN-7A-3xP" id="o90-XA-QsU"/>
+                <outlet property="right" destination="Pqh-ig-xLv" id="zIC-ec-cjm"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="160" height="50"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nLw-i5-ErV" customClass="CustomFavoriteButton" customModule="PhotoKit_Demo" customModuleProvider="target">
+                    <rect key="frame" x="0.0" y="0.0" width="46.5" height="50"/>
+                    <color key="backgroundColor" systemColor="systemRedColor"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="hdw-Wv-3RY"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Pqh-ig-xLv" customClass="CustomFavoriteButton" customModule="PhotoKit_Demo" customModuleProvider="target">
+                    <rect key="frame" x="113" y="0.0" width="46.5" height="50"/>
+                    <color key="backgroundColor" systemColor="systemYellowColor"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="Y4v-hQ-bx1"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5iN-7A-3xP" customClass="CustomFavoriteButton" customModule="PhotoKit_Demo" customModuleProvider="target">
+                    <rect key="frame" x="57" y="0.0" width="47" height="50"/>
+                    <color key="backgroundColor" systemColor="systemOrangeColor"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="t8t-14-esT"/>
+                    </constraints>
+                </view>
+            </subviews>
+            <viewLayoutGuide key="safeArea" id="fnl-2z-Ty3"/>
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+            <constraints>
+                <constraint firstItem="nLw-i5-ErV" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="7C7-Ju-aDn"/>
+                <constraint firstItem="5iN-7A-3xP" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="MJm-ip-1tP"/>
+                <constraint firstItem="Pqh-ig-xLv" firstAttribute="bottom" secondItem="i5M-Pr-FkT" secondAttribute="bottom" id="RJl-Mk-fRq"/>
+                <constraint firstItem="nLw-i5-ErV" firstAttribute="bottom" secondItem="i5M-Pr-FkT" secondAttribute="bottom" id="WX0-73-WQU"/>
+                <constraint firstItem="nLw-i5-ErV" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="ehI-aX-4rl"/>
+                <constraint firstAttribute="trailing" secondItem="Pqh-ig-xLv" secondAttribute="trailing" id="fzm-Lq-L48"/>
+                <constraint firstItem="5iN-7A-3xP" firstAttribute="bottom" secondItem="i5M-Pr-FkT" secondAttribute="bottom" id="gqd-wL-rtM"/>
+                <constraint firstItem="Pqh-ig-xLv" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="i5L-lg-KUg"/>
+                <constraint firstItem="5iN-7A-3xP" firstAttribute="centerY" secondItem="i5M-Pr-FkT" secondAttribute="centerY" id="iEd-jS-1oX"/>
+                <constraint firstItem="5iN-7A-3xP" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="ksd-fa-MLd"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="137.68115942028987" y="101.78571428571428"/>
+        </view>
+    </objects>
+    <resources>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemOrangeColor">
+            <color red="1" green="0.58431372549019611" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemRedColor">
+            <color red="1" green="0.23137254901960785" blue="0.18823529411764706" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemYellowColor">
+            <color red="1" green="0.80000000000000004" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
+</document>
