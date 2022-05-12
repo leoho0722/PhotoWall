@@ -21,6 +21,7 @@ class PhotosDetailViewController: UIViewController {
     let photosImageRequestOptions = PHImageRequestOptions()
     let livePhotoImageRequestOptions = PHLivePhotoRequestOptions()
     let videoRequestOptions = PHVideoRequestOptions()
+    let photoAssetResource = PHAssetResource()
     
     // AVPlayer 變數宣告
     var avPlayerLayer: AVPlayerLayer!
@@ -30,16 +31,21 @@ class PhotosDetailViewController: UIViewController {
     
     var appearance: Bool = false
     
+    var tabBarIsHidden: Bool = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("該張照片的收藏狀態：\(asset.isFavorite)")
+        print("該張的收藏狀態：\(asset.isFavorite)")
         print("該張的 mediaType：\(asset.mediaType.rawValue), mediaSubtypes：\(asset.mediaSubtypes)")
+        print("該張的檔名：\(asset.value(forKey: "filename"))")
         
         PHPhotoLibrary.shared().register(self) // 註冊相簿變化的觀察
         
         livePhotoView.delegate = self // 將 PHLivePhotoView 的委任指派給 PhotosDetailViewController
         
         appearance = (UITraitCollection.current.userInterfaceStyle == .dark) ? (true) : (false)
+        
+        customTabBarFooterView.isHidden = tabBarIsHidden
         
         if (asset.mediaType == .image) {
             self.setupCustomTabBarFooterView(isPlayHidden: true) // 隱藏中間的播放鍵

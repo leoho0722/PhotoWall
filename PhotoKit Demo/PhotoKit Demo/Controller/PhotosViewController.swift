@@ -16,12 +16,16 @@ class PhotosViewController: UIViewController {
     
     // Photos 變數宣告
     var allPhotos: PHFetchResult<PHAsset>!
+    
     let allPhotosOptions = PHFetchOptions() // 創建 PHFetchOptions 實例
+    
     let photoCacheImageManager = PHCachingImageManager() // 創建 PHCachingImageManager 實例
+   
     var thumbnailSize: CGSize! // 縮圖大小
     
     // 每行、每列的個數
     var numOfRow: Int = 3
+    
     var numOfColumn: Int = 3
     
     var itemIndexPath: IndexPath = []
@@ -137,6 +141,20 @@ class PhotosViewController: UIViewController {
         PHPhotoLibrary.shared().register(self) // 註冊相簿變化的觀察
     }
     
+    // MARK: - 建立 UIContextMenuConfiguration
+    
+    func createContextMenuConfiguration(identifier: Int, asset: PHAsset, previewMenu: UIMenu) -> UIContextMenuConfiguration {
+        let configuration = UIContextMenuConfiguration(identifier: String(identifier) as NSCopying) { () -> UIViewController in
+            let previewVC = PhotosDetailViewController()
+            previewVC.asset = asset
+            previewVC.preferredContentSize = CGSize(width: 280, height: 360)
+            return previewVC
+        } actionProvider: { (element) -> UIMenu? in
+            return previewMenu
+        }
+        return configuration
+    }
+    
     deinit {
         PHPhotoLibrary.shared().unregisterChangeObserver(self) // 移除相簿變化的觀察
     }
@@ -146,6 +164,7 @@ class PhotosViewController: UIViewController {
 // MARK: - PHPhotoLibraryChangeObserver
 
 extension PhotosViewController: PHPhotoLibraryChangeObserver {
+    
     func photoLibraryDidChange(_ changeInstance: PHChange) {
         guard let changes = changeInstance.changeDetails(for: allPhotos) else { return }
         DispatchQueue.main.async {
@@ -173,11 +192,13 @@ extension PhotosViewController: PHPhotoLibraryChangeObserver {
             }
         }
     }
+    
 }
 
 // MARK: - UICollectionViewDelegate、UICollectionViewDataSource
 
 extension PhotosViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return allPhotos.count
     }
@@ -210,11 +231,42 @@ extension PhotosViewController: UICollectionViewDelegate, UICollectionViewDataSo
         nextVC.asset = allPhotos.object(at: indexPath.item)
         self.navigationController?.pushViewController(nextVC, animated: true)
     }
+    
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        itemIndexPath = indexPath
+        
+        let identifier = indexPath.item
+        
+        let asset = allPhotos.object(at: indexPath.item)
+
+        let previewMenu = UIMenu(children: [
+            
+        ])
+        
+        return createContextMenuConfiguration(identifier: identifier, asset: asset, previewMenu: previewMenu)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionCommitAnimating) {
+
+        let asset = allPhotos.object(at: itemIndexPath.item)
+        
+        if let index = Int(configuration.identifier as! String) {
+            animator.addCompletion {
+                let previewVC = PhotosDetailViewController()
+                previewVC.asset = asset
+                self.show(previewVC, sender: nil)
+            }
+        }
+
+    }
+    
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout
 
 extension PhotosViewController: UICollectionViewDelegateFlowLayout {
+    
     // Cell 的寬高
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         photosCollectionViewFlowLayout.itemSize = CGSize(width: 110, height: 110) // 設定 Cell 的大小
@@ -235,4 +287,5 @@ extension PhotosViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
         return UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
     }
+    
 }
