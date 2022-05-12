@@ -37,7 +37,9 @@ class PhotosDetailViewController: UIViewController {
         super.viewDidLoad()
         print("該張的收藏狀態：\(asset.isFavorite)")
         print("該張的 mediaType：\(asset.mediaType.rawValue), mediaSubtypes：\(asset.mediaSubtypes)")
-        print("該張的檔名：\(asset.value(forKey: "filename"))")
+        print("該張的檔名：\(asset.value(forKey: "filename")!)")
+        
+        self.title = "\(asset.value(forKey: "filename")!)"
         
         PHPhotoLibrary.shared().register(self) // 註冊相簿變化的觀察
         

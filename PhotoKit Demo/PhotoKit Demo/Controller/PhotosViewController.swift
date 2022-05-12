@@ -7,7 +7,6 @@
 
 import UIKit
 import Photos
-import PhotosUI
 
 class PhotosViewController: UIViewController {
 
@@ -18,6 +17,8 @@ class PhotosViewController: UIViewController {
     var allPhotos: PHFetchResult<PHAsset>!
     
     let allPhotosOptions = PHFetchOptions() // 創建 PHFetchOptions 實例
+    
+    let photosImageRequestOptions = PHImageRequestOptions()
     
     let photoCacheImageManager = PHCachingImageManager() // 創建 PHCachingImageManager 實例
    
@@ -145,14 +146,39 @@ class PhotosViewController: UIViewController {
     
     func createContextMenuConfiguration(identifier: Int, asset: PHAsset, previewMenu: UIMenu) -> UIContextMenuConfiguration {
         let configuration = UIContextMenuConfiguration(identifier: String(identifier) as NSCopying) { () -> UIViewController in
-            let previewVC = PhotosDetailViewController()
-            previewVC.asset = asset
-            previewVC.preferredContentSize = CGSize(width: 280, height: 360)
-            return previewVC
+            return self.createPreviewUIViewController(asset: asset, size: CGSize(width: asset.pixelWidth, height: asset.pixelHeight))
         } actionProvider: { (element) -> UIMenu? in
             return previewMenu
         }
         return configuration
+    }
+    
+    // MARK: - 建立 UIContextMenu 的 UIViewController
+    
+    func createPreviewUIViewController(asset: PHAsset, size: CGSize) -> UIViewController {
+        #if DEBUG
+        print("size.width: \(size.width), size.height: \(size.height)")
+        #endif
+        
+        let controller = UIViewController()
+        let imageView = UIImageView(frame: controller.view.bounds)
+        imageView.contentMode = .scaleAspectFill
+//        imageView.center = controller.view.center
+
+        photosImageRequestOptions.deliveryMode = .highQualityFormat
+        photosImageRequestOptions.resizeMode = .exact
+        photosImageRequestOptions.isNetworkAccessAllowed = true
+        
+        PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: photosImageRequestOptions) { image, _ in
+            guard let results = image else { return }
+            imageView.image = results
+        }
+                
+        controller.view.addSubview(imageView)
+                        
+        controller.preferredContentSize = size
+        
+        return controller
     }
     
     deinit {
@@ -241,7 +267,38 @@ extension PhotosViewController: UICollectionViewDelegate, UICollectionViewDataSo
         let asset = allPhotos.object(at: indexPath.item)
 
         let previewMenu = UIMenu(children: [
-            
+            UIAction(title: asset.isFavorite ? "Cancel Favorite" : "Favorites",
+                     image: asset.isFavorite ? UIImage(systemName: "heart.fill") : UIImage(systemName: "heart"),
+                     handler: { action in
+                         PHPhotoLibrary.shared().performChanges {
+                             let request = PHAssetChangeRequest(for: asset)
+                             request.isFavorite = !asset.isFavorite
+                             print("該張照片修改後的收藏狀態：\(request.isFavorite)")
+                         } completionHandler: { success, error in
+                             DispatchQueue.main.async {
+                                 if (success) {
+                                     print("成功修改")
+                                 } else {
+                                     CustomAlert.shared.customAlert(title: "Can't Change Favorite Status！", message: "Error Message：\(String(describing: error?.localizedDescription))", vc: self, actionHandler: nil)
+                                 }
+                             }
+                         }
+                     }),
+            UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive, handler: { action in
+                PHPhotoLibrary.shared().performChanges {
+                    PHAssetChangeRequest.deleteAssets([asset] as NSArray)
+                } completionHandler: { success, error in
+                    DispatchQueue.main.async {
+                        if (success) {
+                            CustomAlert.shared.customAlert(title: "Delete Success！", message: nil, vc: self, actionHandler: {
+                                self.reloadItemClicked()
+                            })
+                        } else {
+                            CustomAlert.shared.customAlert(title: "Delete Failed！", message: "Error Message：\(String(describing: error?.localizedDescription))", vc: self, actionHandler: nil)
+                        }
+                    }
+                }
+            })
         ])
         
         return createContextMenuConfiguration(identifier: identifier, asset: asset, previewMenu: previewMenu)
@@ -251,7 +308,7 @@ extension PhotosViewController: UICollectionViewDelegate, UICollectionViewDataSo
 
         let asset = allPhotos.object(at: itemIndexPath.item)
         
-        if let index = Int(configuration.identifier as! String) {
+        if let _ = Int(configuration.identifier as! String) {
             animator.addCompletion {
                 let previewVC = PhotosDetailViewController()
                 previewVC.asset = asset
