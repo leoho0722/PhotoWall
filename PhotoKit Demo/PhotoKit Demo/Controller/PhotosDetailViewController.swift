@@ -21,7 +21,7 @@ class PhotosDetailViewController: UIViewController {
     let photosImageRequestOptions = PHImageRequestOptions()
     let livePhotoImageRequestOptions = PHLivePhotoRequestOptions()
     let videoRequestOptions = PHVideoRequestOptions()
-    let photoAssetResource = PHAssetResource()
+    let imageManager = PHImageManager.default()
     
     // AVPlayer 變數宣告
     var avPlayerLayer: AVPlayerLayer!
@@ -37,9 +37,9 @@ class PhotosDetailViewController: UIViewController {
         super.viewDidLoad()
         print("該張的收藏狀態：\(asset.isFavorite)")
         print("該張的 mediaType：\(asset.mediaType.rawValue), mediaSubtypes：\(asset.mediaSubtypes)")
-        print("該張的檔名：\(asset.value(forKey: "filename")!)")
+        print("該張的檔名：\(asset.fileName)")
         
-        self.title = "\(asset.value(forKey: "filename")!)"
+        self.title = "\(asset.fileName)"
         
         PHPhotoLibrary.shared().register(self) // 註冊相簿變化的觀察
         
@@ -140,7 +140,7 @@ class PhotosDetailViewController: UIViewController {
                 videoRequestOptions.deliveryMode = .highQualityFormat
                 videoRequestOptions.isNetworkAccessAllowed = true
                 
-                PHImageManager.default().requestPlayerItem(forVideo: asset, options: videoRequestOptions) { playerItem, info in
+                imageManager.requestPlayerItem(forVideo: asset, options: videoRequestOptions) { playerItem, info in
                     DispatchQueue.main.async {
                         guard self.avPlayerLayer == nil else { return }
                         let player = AVPlayer(playerItem: playerItem)
@@ -172,7 +172,7 @@ class PhotosDetailViewController: UIViewController {
         }
     }
     
-    // 監聽影片播放是否已經完成
+    // 監聽影片是否已經播放完畢
     @objc func videoHasPlayedDone(notification: NSNotification) {
         print("影片已經播放完了")
         DispatchQueue.main.async {
@@ -194,10 +194,9 @@ class PhotosDetailViewController: UIViewController {
     // MARK:  顯示照片
     func updateImage() {
         photosImageRequestOptions.deliveryMode = .highQualityFormat
-        photosImageRequestOptions.resizeMode = .exact
         photosImageRequestOptions.isNetworkAccessAllowed = true
         
-        PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: photosImageRequestOptions) { image, _ in
+        imageManager.requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: photosImageRequestOptions) { image, _ in
             guard let results = image else { return }
             self.photosDetailImage.image = results
             
@@ -212,7 +211,7 @@ class PhotosDetailViewController: UIViewController {
         livePhotoImageRequestOptions.deliveryMode = .highQualityFormat
         livePhotoImageRequestOptions.isNetworkAccessAllowed = true
         
-        PHImageManager.default().requestLivePhoto(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: livePhotoImageRequestOptions) { livePhoto, info in
+        imageManager.requestLivePhoto(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: livePhotoImageRequestOptions) { livePhoto, info in
             guard let results = livePhoto else { return }
             self.livePhotoView.livePhoto = results
             
@@ -242,7 +241,6 @@ extension PhotosDetailViewController: PHPhotoLibraryChangeObserver {
             }
         }
     }
-    
 }
 
 // MARK: - Live Photo View Delegate
@@ -256,5 +254,4 @@ extension PhotosDetailViewController: PHLivePhotoViewDelegate {
     func livePhotoView(_ livePhotoView: PHLivePhotoView, didEndPlaybackWith playbackStyle: PHLivePhotoViewPlaybackStyle) {
         isPlayingLivePhoto = (playbackStyle == .full)
     }
-    
 }

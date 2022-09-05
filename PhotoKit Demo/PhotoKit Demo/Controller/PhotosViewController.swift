@@ -24,6 +24,8 @@ class PhotosViewController: UIViewController {
    
     var thumbnailSize: CGSize! // 縮圖大小
     
+    var previousPreheatRect: CGRect = .zero
+    
     // 每行、每列的個數
     var numOfRow: Int = 3
     
@@ -31,10 +33,14 @@ class PhotosViewController: UIViewController {
     
     var itemIndexPath: IndexPath = []
     
+    var availableWidth: CGFloat = 0
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.title = "Photo Wall"
+        
+        resetCachedAssets() // 重設 PHAsset Cache
         
         setUpCollectionView() // 設定 CollectionView
                 
@@ -50,6 +56,23 @@ class PhotosViewController: UIViewController {
         let scale = UIScreen.main.scale
         let cellSize = photosCollectionViewFlowLayout.itemSize
         thumbnailSize = CGSize(width: cellSize.width * scale, height: cellSize.height * scale)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        updateCachedAssets()
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        let width = view.bounds.inset(by: view.safeAreaInsets).width
+        // Adjust the item size if the available width has changed.
+        if availableWidth != width {
+            availableWidth = width
+            let columnCount = (availableWidth / 80).rounded(.towardZero)
+            let itemLength = (availableWidth - columnCount - 1) / columnCount
+            photosCollectionViewFlowLayout.itemSize = CGSize(width: itemLength, height: itemLength)
+        }
     }
     
     // MARK: - 設定 CollectionView
@@ -70,7 +93,6 @@ class PhotosViewController: UIViewController {
     
     func setUpNavigationLeftBarButtonItems() {
         let reloadItem = UIBarButtonItem(image: UIImage(systemName: "arrow.counterclockwise"), style: .plain, target: self, action: #selector(reloadItemClicked))
-        
         self.navigationItem.leftBarButtonItems = [reloadItem]
     }
     
@@ -142,6 +164,77 @@ class PhotosViewController: UIViewController {
         PHPhotoLibrary.shared().register(self) // 註冊相簿變化的觀察
     }
     
+    // MARK: - PHAsset Cache
+    
+    func resetCachedAssets() {
+        photoCacheImageManager.stopCachingImagesForAllAssets()
+        previousPreheatRect = .zero
+    }
+    
+    func updateCachedAssets() {
+        // Update only if the view is visible.
+        guard isViewLoaded && view.window != nil else { return }
+        
+        // The window you prepare ahead of time is twice the height of the visible rect.
+        let visibleRect = CGRect(origin: photosCollectionView!.contentOffset, size: photosCollectionView!.bounds.size)
+        let preheatRect = visibleRect.insetBy(dx: 0, dy: -0.5 * visibleRect.height)
+        
+        // Update only if the visible area is significantly different from the last preheated area.
+        let delta = abs(preheatRect.midY - previousPreheatRect.midY)
+        guard delta > view.bounds.height / 3 else { return }
+        
+        // Compute the assets to start and stop caching.
+        let (addedRects, removedRects) = differencesBetweenRects(previousPreheatRect, preheatRect)
+        let addedAssets = addedRects
+            .flatMap { rect in
+                photosCollectionView!.indexPathsForElements(in: rect)
+            }
+            .map { indexPath in
+                allPhotos.object(at: indexPath.item)
+            }
+        let removedAssets = removedRects
+            .flatMap { rect in
+                photosCollectionView!.indexPathsForElements(in: rect)
+            }
+            .map { indexPath in
+                allPhotos.object(at: indexPath.item)
+            }
+        
+        // Update the assets the PHCachingImageManager is caching.
+        photoCacheImageManager.startCachingImages(for: addedAssets,
+                                                  targetSize: thumbnailSize, contentMode: .aspectFill, options: nil)
+        photoCacheImageManager.stopCachingImages(for: removedAssets,
+                                                 targetSize: thumbnailSize, contentMode: .aspectFill, options: nil)
+        // Store the computed rectangle for future comparison.
+        previousPreheatRect = preheatRect
+    }
+    
+    func differencesBetweenRects(_ old: CGRect, _ new: CGRect) -> (added: [CGRect], removed: [CGRect]) {
+        if old.intersects(new) {
+            var added = [CGRect]()
+            if new.maxY > old.maxY {
+                added += [CGRect(x: new.origin.x, y: old.maxY,
+                                 width: new.width, height: new.maxY - old.maxY)]
+            }
+            if old.minY > new.minY {
+                added += [CGRect(x: new.origin.x, y: new.minY,
+                                 width: new.width, height: old.minY - new.minY)]
+            }
+            var removed = [CGRect]()
+            if new.maxY < old.maxY {
+                removed += [CGRect(x: new.origin.x, y: new.maxY,
+                                   width: new.width, height: old.maxY - new.maxY)]
+            }
+            if old.minY < new.minY {
+                removed += [CGRect(x: new.origin.x, y: old.minY,
+                                   width: new.width, height: new.minY - old.minY)]
+            }
+            return (added, removed)
+        } else {
+            return ([new], [old])
+        }
+    }
+    
     // MARK: - 建立 UIContextMenuConfiguration
     
     func createContextMenuConfiguration(identifier: Int, asset: PHAsset, previewMenu: UIMenu) -> UIContextMenuConfiguration {
@@ -193,10 +286,10 @@ extension PhotosViewController: PHPhotoLibraryChangeObserver {
     
     func photoLibraryDidChange(_ changeInstance: PHChange) {
         guard let changes = changeInstance.changeDetails(for: allPhotos) else { return }
-        DispatchQueue.main.async {
-            self.allPhotos = changes.fetchResultAfterChanges
+        DispatchQueue.main.sync {
+            allPhotos = changes.fetchResultAfterChanges
             if (changes.hasIncrementalChanges) {
-                guard let collectionView = self.photosCollectionView else { fatalError() }
+                guard let collectionView = photosCollectionView else { fatalError() }
 
                 collectionView.performBatchUpdates({
                     if let removed = changes.removedIndexes, removed.count > 0 {
@@ -214,11 +307,20 @@ extension PhotosViewController: PHPhotoLibraryChangeObserver {
                     }
                 }, completion: nil)
             } else {
-                self.photosCollectionView.reloadItems(at: [self.itemIndexPath])
+                photosCollectionView.reloadData()
             }
+            resetCachedAssets()
         }
     }
+}
+
+// MARK: - UIScrollViewDelegate
+
+extension PhotosViewController: UIScrollViewDelegate {
     
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        updateCachedAssets()
+    }
 }
 
 // MARK: - UICollectionViewDelegate、UICollectionViewDataSource
@@ -315,9 +417,7 @@ extension PhotosViewController: UICollectionViewDelegate, UICollectionViewDataSo
                 self.show(previewVC, sender: nil)
             }
         }
-
     }
-    
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout
@@ -325,24 +425,38 @@ extension PhotosViewController: UICollectionViewDelegate, UICollectionViewDataSo
 extension PhotosViewController: UICollectionViewDelegateFlowLayout {
     
     // Cell 的寬高
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        photosCollectionViewFlowLayout.itemSize = CGSize(width: 110, height: 110) // 設定 Cell 的大小
-        return photosCollectionViewFlowLayout.itemSize
-    }
+//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+//        photosCollectionViewFlowLayout.itemSize = CGSize(width: 80, height: 80) // 設定 Cell 的大小
+//        return photosCollectionViewFlowLayout.itemSize
+//    }
 
     // Cell 的上下間距
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 2
+        return 0
     }
 
     // Cell 的左右間距
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 2
+        return 0
     }
 
     // Cell 與 CollectionView 的間距
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        return UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
     }
-    
 }
+
+private extension UICollectionView {
+    func indexPathsForElements(in rect: CGRect) -> [IndexPath] {
+        let allLayoutAttributes = collectionViewLayout.layoutAttributesForElements(in: rect)!
+        return allLayoutAttributes.map { $0.indexPath }
+    }
+}
+
+// MARK: - 參考資料
+
+/**
+1. Browsing and Modifying Photo Albums
+https://developer.apple.com/documentation/photokit/browsing_and_modifying_photo_albums
+ 
+*/

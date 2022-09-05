@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import Photos
 
 extension UIBarButtonItem {
     /// 在 UIBar 上面加按鈕
@@ -54,5 +55,14 @@ extension UIBarButtonItem {
         menuBarItem.customView?.widthAnchor.constraint(equalToConstant: size.width).isActive = true
         
         return menuBarItem
+    }
+}
+
+extension PHAsset {
+    
+    var fileName: String {
+        get {
+            return self.value(forKey: "filename") as! String
+        }
     }
 }
