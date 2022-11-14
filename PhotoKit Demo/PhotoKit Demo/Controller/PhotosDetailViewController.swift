@@ -157,7 +157,7 @@ class PhotosDetailViewController: UIViewController {
             print("按下刪除鍵")
             // 刪除單一照片
             PHPhotoLibrary.shared().performChanges {
-                PHAssetChangeRequest.deleteAssets([self.asset] as NSArray)
+                PHAssetChangeRequest.deleteAssets([self.asset!] as NSArray)
             } completionHandler: { success, error in
                 DispatchQueue.main.async {
                     if (success) {
@@ -168,7 +168,8 @@ class PhotosDetailViewController: UIViewController {
                     }
                 }
             }
-        default: break
+        default:
+            break
         }
     }
     
@@ -234,7 +235,7 @@ extension PhotosDetailViewController: PHPhotoLibraryChangeObserver {
         DispatchQueue.main.sync {
             guard let details = changeInstance.changeDetails(for: asset) else { return }
 
-            asset = details.objectAfterChanges as! PHAsset
+            asset = details.objectAfterChanges!
             
             if (details.assetContentChanged) {
                 chooseUpdateType()
