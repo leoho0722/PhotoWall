@@ -1,0 +1,28 @@
+/* 
+  Localizable.strings
+  Photo Wall
+
+  Created by Leo Ho on 2023/2/19.
+  
+*/
+
+// MARK: Alert
+
+"Confirm" = "Confirm";
+
+// MARK: PhotosViewController
+
+"Favorites" = "Favorites";
+"Cancel Favorites" = "Cancel Favorites";
+"Favorited" = "Favorited";
+"Non Favorited" = "Non Favorited";
+"Photos" = "Photos";
+"Live Photos" = "Live Photos";
+"Videos" = "Videos";
+"Delete" = "Delete";
+
+// MARK: PhotosDetailViewController
+
+"Change Favorite Status Failed" = "Change Favorite Status Failed";
+"Delete Success" = "Delete Success";
+"Delete Failed" = "Delete Failed";

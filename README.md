@@ -1,9 +1,9 @@
-# PhotoKitDemo
+# Photo Wall
 
-iOS App 開發練習 − PhotoKitDemo + 客製化元件練習
+iOS App 開發練習 − Photo Wall
 
 ## 開發環境
-* macOS Monterey 12.5.1
-* Xcode 13.4.1
+* macOS Ventura 13.2.1
+* Xcode 14.1
 * 開發語言：Swift 5
-* App 最低安裝版本限制：iOS 14.0
+* App 最低安裝版本限制：iOS 15.0

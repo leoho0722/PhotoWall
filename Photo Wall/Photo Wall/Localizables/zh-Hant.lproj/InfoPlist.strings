@@ -1,0 +1,10 @@
+/* 
+  InfoPlist.strings
+  Photo Wall
+
+  Created by Leo Ho on 2023/2/19.
+  
+*/
+
+"CFBundleName" = "照片牆";
+"NSPhotoLibraryUsageDescription" = "Photo Wall 想要存取您的照片來顯示在照片牆上";
